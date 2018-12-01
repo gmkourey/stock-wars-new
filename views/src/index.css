@@ -1,0 +1,70 @@
+#navbar {
+  padding: 5px 0px;
+  border-bottom: solid 1px lightgrey;
+  text-align:center;
+}
+.nav {
+  background-color:#D24301;
+  font-family: 'Inconsolata', monospace;
+  font-size: 20px;
+}
+
+.nav-link {
+  color:white;
+}
+
+.nav-link:hover {
+  color:lightgrey;
+}
+
+.coverDiv {
+  background-image: url("./images/banner-image.jpg");
+  background-size: cover;
+}
+
+.brandMessagingDiv {
+  color:white;
+  text-align:center;
+  background-color:grey;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.signUpIn {
+  margin: 0 auto;
+  background-color:rgba(256,256,256,0.95);
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 18vh;
+  width: 30vw;
+}
+.coverBackground {
+  background-image: linear-gradient(90deg,rgb(35, 95, 155),rgb(66, 176, 244));
+  height: 92vh;
+}
+.coverText {
+  color:white;
+  width: 45vw;
+  margin: 0 auto;
+  padding-left: 9vw;
+  margin-top: 15vh;
+}
+
+.coverText h2 {
+  margin-top: 10vh;
+  font-weight: 400;
+  font-size: 1.7em;
+}
+
+.signUpInChange {
+  color:blue;
+  cursor: pointer;
+}
+
+.signUpInChange:hover {
+  text-decoration: underline;
+}
+
+.signUpIn p {
+  margin-bottom: 0px;
+  margin-top: 5px;
+}

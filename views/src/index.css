@@ -68,3 +68,61 @@
   margin-bottom: 0px;
   margin-top: 5px;
 }
+
+.stockCharts {
+  text-align: center;
+}
+
+.dashTitle {
+  font-size: 40px;
+  display: inline-block;
+}
+
+.newsTitle {
+  font-size:40px;
+}
+
+.tickerContainer {
+  width: 100%;
+  overflow:hidden;
+  box-shadow: inset 0px 0px 8px #000000;
+  border-radius: 5px;
+  margin-top: 15px;
+}
+.tickerInner {
+  position: relative;
+  height: 50px;
+  white-space: nowrap;
+}
+.stockTickers {
+  display: inline-block;
+  margin: 0px 20px;
+  font-size: 25px;
+  font-weight: 500;
+}
+
+.stockTickers p {
+  display: inline-block;
+  padding: 5px;
+  margin-bottom: 0px;
+}
+
+.stockNames {
+  font-size: 25px;
+}
+
+.buySellButton {
+  float:right;
+  margin-top: 10px;
+  background-color: rgb(6, 167, 6) !important;
+  border: 1px solid rgb(6, 167, 6) !important;
+}
+
+.buySellButton:hover {
+  background-color: rgb(4, 92, 4) !important;
+  border: 1px solid rgb(4, 92, 4) !important;
+}
+
+.orderFormTitle {
+  font-size: 30px;
+}

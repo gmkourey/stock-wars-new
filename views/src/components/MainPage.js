@@ -9,15 +9,18 @@ class MainPage extends Component {
 
     state = {
         signUpVisible: true,
-        signedIn: false
+        signedIn: false,
+        signedInUser: null
     }
 
     componentDidMount() {
 
         firebase.auth.onAuthStateChanged(authUser => {
-            console.log(authUser);
-            if (authUser != null) this.setState({ signedIn: true })
-            if (!authUser) this.setState({ signedIn: false })
+            if (authUser) {
+                this.setState({ signedIn: true, signedInUser: authUser.email })
+            } else {
+                this.setState({ signedIn: false })
+            }
         });
 
     }
@@ -50,7 +53,7 @@ class MainPage extends Component {
             {!this.state.signedIn ?
             <LandingPage signUpStatus={this.state.signUpVisible} signUpIn={() => this.signUpIn()}/>
             :
-            <Dashboard/>
+            <Dashboard signedInUser={this.state.signedInUser}/>
             }
             </>
         )

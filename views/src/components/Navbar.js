@@ -6,7 +6,7 @@ const Navbar = (props) => {
         <div id="navbar">
             <h1 className="headerTitle">Stock Wars</h1>
             {props.isSignedIn ?
-            <button onClick={() => props.signOut()}>Logout</button> :
+            <button className="logoutButton btn btn-primary" onClick={() => props.signOut()}>Logout</button> :
             <></>
             }
         </div>

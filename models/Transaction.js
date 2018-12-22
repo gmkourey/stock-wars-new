@@ -10,13 +10,15 @@ const TransactionSchema = new Schema ({
     },
     quantity: {
         type: Number,
-        required: true,
+        required: true
     },
     costBasis: {
         type: Number,
+        required: true
     },
     userEmail: {
-        type: String
+        type: String,
+        required: true
     }
 
 })

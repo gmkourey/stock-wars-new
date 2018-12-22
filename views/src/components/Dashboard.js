@@ -1,4 +1,6 @@
 import React from "react";
+import {firebase} from "../firebase";
+import {auth} from "../firebase";
 import API from "../utils/API";
 import StockQuote from "./StockQuote";
 import Position from "./Position";
@@ -13,10 +15,17 @@ class Dashboard extends React.Component {
     "intc", "jnj", "jpm", "mcd", "mrk", "msft", "nke", "pfe", "pg", "trv", "utx", "unh", "vz", "v", "wmt", "wba" ],
         marketNews: [],
         userPositions: [],
-        modalOpen: false
+        modalOpen: false,
+        accountBalance: null
     }
 
     componentDidMount () {
+
+        API.getUserData(this.props.signedInUser)
+        .then(apiRes => {
+            this.setState({accountBalance: apiRes.data[0].availableBalance.toFixed(2)})
+        })
+        .catch(err => console.log(err))
         
         API.getStockQuotes(this.state.stocks)
         .then(apiRes => {
@@ -30,14 +39,31 @@ class Dashboard extends React.Component {
         })
         .catch(err => console.log(err))
 
+        this.buildTransactionsTable();
+    }
+
+    buildTransactionsTable() {
         API.getUserTransactions(this.props.signedInUser)
         .then(apiRes => {
-                let stockInfo = apiRes.data;
-                stockInfo.map(element => {
-                    API.getStockPrice(element.tickerSymbol)
+            console.log(apiRes);
+            const transactionData = {}
+            for(let element of apiRes.data) {
+                if(transactionData[element.tickerSymbol]) {
+                    transactionData[element.tickerSymbol].quantity += element.quantity;
+                    transactionData[element.tickerSymbol].costBasis += element.costBasis;
+                } else {
+                    transactionData[element.tickerSymbol] = {}
+                    transactionData[element.tickerSymbol].quantity = element.quantity;
+                    transactionData[element.tickerSymbol].costBasis = element.costBasis;
+                    transactionData[element.tickerSymbol].ticker = element.tickerSymbol;
+                }
+            }
+            console.log(transactionData);
+                Object.keys(transactionData).map(element => {
+                    API.getStockPrice(element)
                     .then(dbRes => {
-                        element.marketPrice = dbRes.data;
-                        this.setState({userPositions: stockInfo})
+                        transactionData[element].marketPrice = dbRes.data;
+                        this.setState({userPositions: transactionData})
                     })
                 })  
         })
@@ -47,10 +73,18 @@ class Dashboard extends React.Component {
     modalHandler() {
         if(this.state.modalOpen) {
             this.setState({modalOpen: false});
+            this.buildTransactionsTable();
+            API.getUserData(this.props.signedInUser)
+            .then(apiRes => {
+                this.setState({accountBalance: apiRes.data[0].availableBalance.toFixed(2)})
+            })
+            .catch(err => console.log(err))
         } else {
             this.setState({modalOpen: true});
         }
     }
+
+
 
     render () {
         if(document.getElementById("innerTicker")) {
@@ -82,6 +116,10 @@ class Dashboard extends React.Component {
                             })}
                         </div>
                     </div>
+                    <div className="container">
+                        <h2>Account Balance: ${this.state.accountBalance}</h2>
+
+                    </div>
                     <div className="row">
                         <div className="col-md-8">
                         <h1 className="dashTitle display-4">My Positions</h1>
@@ -103,14 +141,15 @@ class Dashboard extends React.Component {
                             </tr>
                             </thead>
                             <tbody>
-                        {this.state.userPositions.length ? 
+                        {Object.keys(this.state.userPositions).length ? 
                         <>
-                        {this.state.userPositions.map(element => {
-                            return (<Position 
-                                ticker={element.tickerSymbol}
-                                quantity={element.quantity}
-                                costBasis={element.costBasis}
-                                marketPrice={element.marketPrice}
+                        {Object.keys(this.state.userPositions).map(element => {
+                            return (<Position
+                                key={this.state.userPositions[element].ticker} 
+                                ticker={this.state.userPositions[element].ticker}
+                                quantity={this.state.userPositions[element].quantity}
+                                costBasis={this.state.userPositions[element].costBasis.toFixed(2)}
+                                marketPrice={this.state.userPositions[element].marketPrice}
                                 />
                                 )
                                 
@@ -119,16 +158,14 @@ class Dashboard extends React.Component {
                         :
                         <tr>
                         <td colSpan="6">It looks like you haven't purchased any stocks yet. Buy some by clicking on the button below.</td>
-                        </tr>
+                        </tr>   
                     }
                     </tbody>
                         </table>
                         </div>
                         <div className="col-md-4">
                         <h1 className="newsTitle display-4">Market News</h1>
-                        {this.state.marketNews.map(element => {
-                            return <h6>Hello</h6>
-                        })}
+                         <p>News Goes Here</p>
                         </div>
                     </div>
                     </div>

@@ -14,5 +14,14 @@ export default {
     getStockPrice: function(ticker) {
         ticker = ticker.toLowerCase();
         return axios.get("https://api.iextrading.com/1.0/stock/" + ticker + "/price")
+    },
+    newTransaction: function(body) {
+        return axios.post("/api/transactions", body)
+    },
+    updateBalance: function(email, body) {
+        return axios.put("/api/user/" + email, body)
+    },
+    getUserData: function(email) {
+        return axios.get("/api/user/" + email)
     }
 }

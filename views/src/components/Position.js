@@ -7,7 +7,7 @@ const Position = (props) => {
     let dollarDiff = marketValue - props.costBasis;
     let percentDiff = ((marketValue - props.costBasis)/props.costBasis).toFixed(2) + "%";
 
-    if(marketValue > props.costBasis) {
+    if(marketValue >= props.costBasis) {
         style.color = "green";
         dollarDiff = "$" + dollarDiff.toFixed(2);
     } else {
@@ -19,7 +19,7 @@ const Position = (props) => {
         <tr>
             <td>{props.ticker}</td>
             <td>{props.quantity}</td>
-            <td>{props.costBasis}</td>
+            <td>${props.costBasis}</td>
             <td>${marketValue.toFixed(2)}</td>
             <td style={style}>{dollarDiff}</td>
             <td style={style}>{percentDiff}</td>

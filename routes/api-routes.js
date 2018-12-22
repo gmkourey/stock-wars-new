@@ -13,4 +13,8 @@ router.route("/users")
     .get(UsersController.viewUsers)
     .post(UsersController.addUser)
 
+router.route("/user/:id")
+    .get(UsersController.getUserData)
+    .put(UsersController.updateBalance)
+
 module.exports = router;

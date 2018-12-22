@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import Navbar from "./Navbar";
 import LandingPage from "./LandingPage";
 import Dashboard from "./Dashboard";
+import API from "../utils/API";
 import {firebase} from "../firebase";
 import {auth} from "../firebase";
 
@@ -10,14 +11,25 @@ class MainPage extends Component {
     state = {
         signUpVisible: true,
         signedIn: false,
-        signedInUser: null
+        signedInUser: null,
+        availableBalance: null
     }
 
     componentDidMount() {
 
         firebase.auth.onAuthStateChanged(authUser => {
             if (authUser) {
-                this.setState({ signedIn: true, signedInUser: authUser.email })
+                API.getUserData(authUser.email)
+                .then(apiRes => {
+                    this.setState({ 
+                        signedIn: true, 
+                        signedInUser: authUser.email, 
+                        userAvailableBalance: apiRes.data.availableBalance 
+                    })
+                })
+                .catch(err => console.log(err))
+                
+                
             } else {
                 this.setState({ signedIn: false })
             }

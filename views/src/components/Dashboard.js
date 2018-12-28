@@ -1,6 +1,4 @@
 import React from "react";
-import {firebase} from "../firebase";
-import {auth} from "../firebase";
 import API from "../utils/API";
 import StockQuote from "./StockQuote";
 import Position from "./Position";
@@ -16,7 +14,9 @@ class Dashboard extends React.Component {
         marketNews: [],
         userPositions: [],
         modalOpen: false,
-        accountBalance: null
+        accountBalance: 0,
+        totalMarketValue: 0,
+        totalAccountValue: 0
     }
 
     componentDidMount () {
@@ -45,7 +45,6 @@ class Dashboard extends React.Component {
     buildTransactionsTable() {
         API.getUserTransactions(this.props.signedInUser)
         .then(apiRes => {
-            console.log(apiRes);
             const transactionData = {}
             for(let element of apiRes.data) {
                 if(transactionData[element.tickerSymbol]) {
@@ -58,14 +57,19 @@ class Dashboard extends React.Component {
                     transactionData[element.tickerSymbol].ticker = element.tickerSymbol;
                 }
             }
-            console.log(transactionData);
                 Object.keys(transactionData).map(element => {
                     API.getStockPrice(element)
                     .then(dbRes => {
                         transactionData[element].marketPrice = dbRes.data;
                         this.setState({userPositions: transactionData})
+                        let totalMarketValue = 0;
+                        for(let element in transactionData) {
+                            totalMarketValue += transactionData[element].quantity * transactionData[element].marketPrice
+                        }
+                        this.setState({totalMarketValue: totalMarketValue.toFixed(2)})
+                        this.setState({totalAccountValue: (parseInt(this.state.accountBalance) + parseInt(this.state.totalMarketValue)).toFixed(2)}) 
                     })
-                })  
+                })
         })
         .catch(err => console.log(err))
     }
@@ -117,7 +121,9 @@ class Dashboard extends React.Component {
                         </div>
                     </div>
                     <div className="container">
-                        <h2>Account Balance: ${this.state.accountBalance}</h2>
+                        <h2>Available Balance: ${this.state.accountBalance}</h2>
+                        <h2>Market Value: ${this.state.totalMarketValue}</h2>
+                        <h2>Total Account Value: ${this.state.totalAccountValue}</h2>
 
                     </div>
                     <div className="row">
@@ -125,7 +131,7 @@ class Dashboard extends React.Component {
                         <h1 className="dashTitle display-4">My Positions</h1>
                         <button type="button" className="btn btn-primary buySellButton" onClick={() => this.modalHandler()}>Buy/Sell Stocks</button>
                         <TransactionModalWrapped 
-                        handleModal={() => this.modalHandler()} 
+                        modalHandler={() => this.modalHandler()} 
                         modalOpen={this.state.modalOpen} 
                         signedInUser={this.props.signedInUser}
                         />
@@ -144,6 +150,7 @@ class Dashboard extends React.Component {
                         {Object.keys(this.state.userPositions).length ? 
                         <>
                         {Object.keys(this.state.userPositions).map(element => {
+                            if(this.state.userPositions[element].quantity !== 0) {
                             return (<Position
                                 key={this.state.userPositions[element].ticker} 
                                 ticker={this.state.userPositions[element].ticker}
@@ -152,6 +159,7 @@ class Dashboard extends React.Component {
                                 marketPrice={this.state.userPositions[element].marketPrice}
                                 />
                                 )
+                            }
                                 
                         })}
                         </>

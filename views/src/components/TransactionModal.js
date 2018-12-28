@@ -26,11 +26,6 @@ const styles = theme => ({
   },
 });
 
-let buttonStyle = {
-  float: "left",
-  backgroundColor: "red"
-}
-
 class TransactionModal extends React.Component {
 
   state = {
@@ -39,83 +34,122 @@ class TransactionModal extends React.Component {
     transactionPrice: null,
     buyOrder: true,
     quantity: null,
-    showAlert: false
+    showCashAlert: false,
+    showNoOwnAlert: false
   }
 
-  getStockPrice(event) {
-      this.setState({stockTicker: event.target.value})
-      API.getStockPrice(event.target.value.toLowerCase())
-      .then(apiRes => {
-        this.setState({stockPrice: apiRes.data.toFixed(2)})
-      })
-  }
-
-  handleQuantityChange (event) {
-    this.setState({transactionPrice: (event.target.value * this.state.stockPrice).toFixed(2), quantity: event.target.value})
-  }
-
-  buyOrSell(event) {
+  buyOrSellHandler(event) {
     if(event.target.value === "buy") {
-      this.setState({buyOrder: true})
-      
+      this.setState({buyOrder: true}) 
     } else {
       this.setState({buyOrder: false})
-      
     }
   }
 
-  buyStock(transAmount, body) {
+  setStockPrice(event) {
+    event.persist();
+    this.setState({stockTicker: event.target.value})
+    API.getStockPrice(event.target.value.toLowerCase())
+    .then(apiRes => {
+      this.setState({stockPrice: apiRes.data})
+    })
+    .catch(err => console.log(err))
+  }
+
+  handleQuantityChange (event) {
+      this.setState({quantity: event.target.value})
+      this.setState({transactionPrice: event.target.value * this.state.stockPrice})
+  }
+
+  buyStock() {
     //Setting up a receiving variable for current available balance
     let oldAvailableBalance;
+    let updatedTransactionCost;
     //Get most recent stock price
-    API.getStockPrice(this.state.stockTicker.toLowerCase())
+    API.getUserData(this.props.signedInUser)
     .then(apiRes => {
-      //Get user data to see if they can afford it with available balance
-      API.getUserData(this.props.signedInUser)
-      .then(apiRes => {
-        //Conditional to see if they can afford it
-        if(apiRes.data[0].availableBalance >= parseInt(transAmount)) {
-          this.setState({showAlert: false})
-          oldAvailableBalance = apiRes.data[0].availableBalance;
-          //New transactions is created because they can afford it
+      if(apiRes.data[0].availableBalance >= parseInt(this.state.transactionPrice)) {
+        oldAvailableBalance = apiRes.data[0].availableBalance;
+        API.getStockPrice(this.state.stockTicker)
+        .then(apiRes => {
+          updatedTransactionCost = apiRes.data * this.state.quantity;
+          const body = {
+            tickerSymbol: this.state.stockTicker,
+            quantity: this.state.quantity,
+            costBasis: apiRes.data * this.state.quantity,
+            userEmail: this.props.signedInUser
+          }
           API.newTransaction(body)
-          .then(apiRes => {
-            let newAvailableBalance = oldAvailableBalance - transAmount
-            //Updates available balance of user
-            API.updateBalance(this.props.signedInUser, {availableBalance: newAvailableBalance})
-            .then(apiRes => this.props.handleModal())
+          .then(dbRes => {
+            API.updateBalance(this.props.signedInUser,{updatedBalance: oldAvailableBalance - updatedTransactionCost})
+            .then(apiRes => this.props.modalHandler())
             .catch(err => console.log(err))
           })
           .catch(err => console.log(err))
-        } else {
-          this.setState({showAlert: true})
-        }
-      })
+        })
+        .catch(err => console.log(err))
+      } else {
+        this.setState({showCashAlert: true})
+      }
     })
+  }
+
+  sellStock() {
+
+    API.getUserTransactions(this.props.signedInUser)
+    .then(dbRes => {
+      let numOfShares = 0;
+      for(let element of dbRes.data) {
+        if(element.tickerSymbol === this.state.stockTicker.toUpperCase()) {
+          numOfShares = numOfShares + element.quantity;
+        }
+      }
+      if(numOfShares >= Math.abs(this.state.quantity)) {
+        API.getStockPrice(this.state.stockTicker.toLowerCase())
+        .then(apiRes => {
+          const body = {
+            tickerSymbol: this.state.stockTicker,
+            quantity: this.state.quantity * -1,
+            costBasis: this.state.stockPrice * this.state.quantity * -1,
+            userEmail: this.props.signedInUser
+          }
+          API.newTransaction(body)
+          .then(dbRes => {
+            API.getUserData(this.props.signedInUser)
+            .then(dbRes => {
+              API.updateBalance(this.props.signedInUser,{updatedBalance: dbRes.data[0].availableBalance - body.costBasis})
+              .then(dbRes => this.props.modalHandler())
+              .catch(err => console.log(err))
+            })
+            
+          })
+          .catch(err => console.log(err))
+      })
+      } else {
+        this.setState({showNoOwnAlert: true})
+      }
+    }) 
     .catch(err => console.log(err))
+
   }
 
   orderSubmit(event) {
     event.preventDefault();
     let transAmount;
+    let quantity;
 
     if(this.state.buyOrder) {
-      transAmount = this.state.transactionPrice
+      transAmount = this.state.transactionPrice;
+      quantity = this.state.quantity;
     } else {
       transAmount = this.state.transactionPrice * -1;
-    }
-
-    const body = {
-      tickerSymbol: this.state.stockTicker,
-      quantity: this.state.quantity,
-      costBasis: transAmount,
-      userEmail: this.props.signedInUser
+      quantity = this.state.quantity * -1;
     }
 
     if(this.state.buyOrder) {
-      this.buyStock(transAmount, body)
+      this.buyStock()
     } else {
-      console.log(transAmount);
+      this.sellStock();
     }
   }
 
@@ -126,7 +160,7 @@ class TransactionModal extends React.Component {
       <div>
         <Modal
           open={this.props.modalOpen}
-          onClose={() => this.props.handleModal()}
+          onClose={() => this.props.modalHandler()}
         >
           <div style={getModalStyle()} className={classes.paper}>
             <form onSubmit={(event) => this.orderSubmit(event)}>
@@ -137,9 +171,15 @@ class TransactionModal extends React.Component {
               </Alert>
               :
               <></>}
+              {this.state.showNoOwnAlert ? 
+              <Alert>
+                It doesn't look like you have enough shares to sell.
+              </Alert>
+              :
+              <></>}
               <div className="form-group">
                 <label forhtml="buySell">Buy or Sell?</label>
-                <select id="buySell" className="form-control" onChange={(event) => this.buyOrSell(event)}>
+                <select id="buySell" className="form-control" onChange={(event) => this.buyOrSellHandler(event)}>
                   <option value="buy">Buy</option>
                   <option value="sell">Sell</option>
                 </select>
@@ -147,7 +187,7 @@ class TransactionModal extends React.Component {
 
               <div className="form-group">
                 <label forhtml="tickerChoice">Which Stock?</label>
-                <input type="text" id="tickerChoice" className="form-control" onChange={(event) => this.getStockPrice(event)}/>
+                <input type="text" id="tickerChoice" className="form-control" onChange={(event) => this.setStockPrice(event)}/>
                 <small className="form-text text-muted">Enter a ticker symbol (i.e. AAPL for Apple)</small>
               </div>
 

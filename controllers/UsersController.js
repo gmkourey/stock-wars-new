@@ -23,8 +23,9 @@ module.exports = {
     },
 
     updateBalance: function (req, res) {
+        console.log(req.params.id, req.body.updatedBalance)
         db.User
-        .findOneAndUpdate({email: req.params.id}, {availableBalance: req.body.availableBalance})
+        .findOneAndUpdate({email: req.params.id}, {availableBalance: req.body.updatedBalance})
         .then(dbRes => res.json(dbRes))
         .catch(err => res.json(err))
     }

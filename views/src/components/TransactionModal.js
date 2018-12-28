@@ -167,7 +167,7 @@ class TransactionModal extends React.Component {
               <h2 className="display-4 orderFormTitle">Order Form</h2>
               {this.state.showAlert ? 
               <Alert>
-                It doesn't look like you have enough cash to complete this transaction.
+                It doesn't look like you have enough cash to complete this transaction. Please try again.
               </Alert>
               :
               <></>}
